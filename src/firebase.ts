@@ -3,10 +3,11 @@ import { getAuth, type Auth } from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 
 const currentHost = typeof window !== 'undefined' ? window.location.hostname : 'localhost'
+const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1'
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'REMOVED',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || currentHost,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (isLocalhost ? 'localhost' : 'REMOVED'),
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'REMOVED',
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'REMOVED',
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || 'REMOVED',
