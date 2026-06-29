@@ -2,17 +2,47 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Profile: owner can write; any authenticated user can read
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
     }
 
+    // Own subcollections: owner can read/write everything
     match /users/{userId}/{document=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Friend requests: anyone can create (send) specifying their own uid as requesterId;
+    // only the recipient can read/delete their own incoming requests
+    match /users/{userId}/friendRequests/{requesterId} {
+      allow create: if request.auth != null && request.auth.uid == requesterId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Sent requests: only the sender can read/write their own
+    match /users/{userId}/sentRequests/{targetId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Friends: owner can read; create/delete allowed by either user (for bidirectional mgmt)
+    match /users/{userId}/friends/{friendId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && (request.auth.uid == userId || request.auth.uid == friendId);
+    }
+
+    // Reviews: any authenticated user can read; owner can write
+    match /users/{userId}/reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+
+    // Usernames collection: any authenticated user can read; owner can write
     match /usernames/{uid} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth.uid == uid;
     }
   }
 }

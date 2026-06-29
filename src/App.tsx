@@ -15,7 +15,7 @@ import SocialPage from './pages/SocialPage';
 import UserDetailPage from './pages/UserDetailPage';
 import { mapMovieResult, mapSeriesResult, TMDB_BASE_URL } from './utils/media';
 import {
-    acceptFriendRequest, declineFriendRequest, deleteReview, hasPendingRequest, loadUserProfile, loadUserReviews,
+    acceptFriendRequest, declineFriendRequest, deleteReview, hasSentRequest, loadUserProfile, loadUserReviews,
     removeFriend, saveReview, searchUsers, sendFriendRequest, subscribeFriendRequests, subscribeFriends,
     subscribeReviews
 } from './utils/social';
@@ -458,7 +458,7 @@ function App() {
     }
 
     setTargetIsFriend(friendUids.includes(targetUid))
-    setTargetHasPendingRequest(await hasPendingRequest(targetUid, user.uid))
+    setTargetHasPendingRequest(await hasSentRequest(user.uid, targetUid))
 
     setTargetUserLoading(false)
   }
@@ -467,7 +467,7 @@ function App() {
     if (!user || !db) return
 
     try {
-      await sendFriendRequest(user.uid, profileName || user.displayName || 'Unknown', toUid)
+      await sendFriendRequest(user.uid, profileName || user.displayName || 'Unknown', toUid, toName)
       setStatusMessage(`Friend request sent to ${toName}.`)
     } catch (error) {
       setStatusMessage('Unable to send friend request.')

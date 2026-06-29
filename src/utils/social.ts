@@ -57,12 +57,18 @@ export async function searchUsers(queryStr: string): Promise<UserProfile[]> {
   return snapshot.docs.map((d) => ({ uid: d.id, ...d.data() } as UserProfile))
 }
 
-export async function sendFriendRequest(fromUid: string, fromName: string, toUid: string): Promise<void> {
+export async function sendFriendRequest(fromUid: string, fromName: string, toUid: string, toName: string): Promise<void> {
   if (!db) throw new Error('Firebase not configured')
+  const now = new Date().toISOString()
   await setDoc(doc(db, 'users', toUid, 'friendRequests', fromUid), {
     fromUid,
     fromName,
-    sentAt: new Date().toISOString(),
+    sentAt: now,
+  })
+  await setDoc(doc(db, 'users', fromUid, 'sentRequests', toUid), {
+    toUid,
+    toName,
+    sentAt: now,
   })
 }
 
@@ -90,6 +96,25 @@ export async function loadUserProfile(uid: string): Promise<UserProfile | null> 
   const snap = await getDoc(doc(db, 'users', uid))
   if (!snap.exists()) return null
   return { uid: snap.id, ...snap.data() } as UserProfile
+}
+
+export async function hasSentRequest(fromUid: string, toUid: string): Promise<boolean> {
+  if (!db) return false
+  const snap = await getDoc(doc(db, 'users', fromUid, 'sentRequests', toUid))
+  return snap.exists()
+}
+
+export async function removeSentRequest(uid: string, toUid: string): Promise<void> {
+  if (!db) return
+  await deleteDoc(doc(db, 'users', uid, 'sentRequests', toUid))
+}
+
+export function subscribeSentRequests(uid: string, onData: (sent: string[]) => void): Unsubscribe | null {
+  if (!db) return null
+  const ref = collection(db, 'users', uid, 'sentRequests')
+  return onSnapshot(ref, (snapshot) => {
+    onData(snapshot.docs.map((d) => d.id))
+  })
 }
 
 export async function hasPendingRequest(toUid: string, fromUid: string): Promise<boolean> {
